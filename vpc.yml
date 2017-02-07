@@ -1,47 +1,47 @@
 ---
 # Cannot get this to work for some reason
-#AWSTemplateFormatVersion: AWSTemplateFormatVersion: "2010-09-09"
+#AWSTemplateFormatVersion: AWSTemplateFormatVersion: '2010-09-09'
 
 Description: This template creates a new VPC, using best practices.
 
 Metadata:
     Foo:
-        Description: "something clever"
+        Description: 'something clever'
     Bar:
-        Description: "something clever"
+        Description: 'something clever'
 
 Parameters:
     Project:
-        Description: "Project name this VPC is has been created for"
-        Type: "String"
-        Default: "CHANGE ME"
+        Description: 'Project name this VPC is has been created for'
+        Type: 'String'
+        Default: 'CHANGE ME'
 
     Creator:
-        Description: "Tool or person creating this VPC"
-        Type: "String"
-        Default: "CloudFormation"
+        Description: 'Tool or person creating this VPC'
+        Type: 'String'
+        Default: 'CloudFormation'
 
     Environment:
-        Description: "Context the VPC will be used in.  Common values are production, testing and development."
-        Type: "String"
-        Default: "development"
+        Description: 'Context the VPC will be used in.  Common values are production, testing and development.'
+        Type: 'String'
+        Default: 'development'
 
     Notes:
-        Description: "Notes to apply, normally edited in the console."
-        Type: "String"
-        Default: "No notes"
+        Description: 'Notes to apply, normally edited in the console.'
+        Type: 'String'
+        Default: 'No notes'
 
 Mappings:
     VPCRanges:
-        10.0.0.0:
-            PublicSubnetAZ1: "10.0.10.0/24"
-            PrivateSubnetAZ1: "10.0.20.0/24"
-            PublicSubnetAZ2: "10.0.30.0/24"
-            PrivateSubnetAZ2: "10.0.40.0/24"
+        subnets:
+            PublicSubnetZone1: '10.0.10.0/24'
+            PrivateSubnetAZ1: '10.0.20.0/24'
+            PublicSubnetAZ2: '10.0.30.0/24'
+            PrivateSubnetAZ2: '10.0.40.0/24'
 
 Resources:
-    VPCBase:
-        Type: "AWS::EC2::VPC"
+    VPC:
+        Type: 'AWS::EC2::VPC'
         Properties:
             CidrBlock: '10.0.0.0/16'
             EnableDnsSupport: 'false'
@@ -50,13 +50,13 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      Ref: AWS::StackName
+                      Ref: 'Project'
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
                 - Key: 'Purpose'
                   Value:
-                      "Fn::Join": [ ' ', [ 'VPC for project', !Ref Project ] ]
+                      'Fn::Join': [ ' ', [ 'VPC for project', !Ref Project ] ]
                 - Key: 'Creator'
                   Value:
                       Ref: 'Creator'
@@ -66,9 +66,76 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    PublicSubnetZone1:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            AvailabilityZone:
+                Fn::Select:
+                - '0'
+                - Fn::GetAZs:
+                    Ref: AWS::Region
+            CidrBlock: '10.0.10.0/24'
+            MapPublicIpOnLaunch: 'True'
+            VpcId:
+                Ref: VPC
+            Tags:
+                - Key: 'Name'
+                  Value: 'Public Zone 1'
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'Public for', !Ref Project ] ]
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+    PrivateSubnetZone1:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            AvailabilityZone:
+                Fn::Select:
+                - '0'
+                - Fn::GetAZs:
+                    Ref: AWS::Region
+            CidrBlock: '10.0.20.0/24'
+            MapPublicIpOnLaunch: 'False'
+            VpcId:
+                Ref: VPC
+            Tags:
+                - Key: 'Name'
+                  Value: 'Private Zone 1'
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'Private for', !Ref Project ] ]
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+
+
 Outputs:
-    Foo:
-        Description: "blah"
-        Value: "bar"
-        Export:
-            Name: "bob"
+    VPCID:
+        Description: 'VPC ID'
+        Value:
+            Ref: VPC
+    PublicSubnet1:
+        Description: 'Zone 1 Public Subnet ID'
+        Value:
+            Ref: PublicSubnetZone1
+    PrivateSubnet1:
+        Description: 'Zone 1 Private Subnet ID'
+        Value:
+            Ref: PrivateSubnetZone1
