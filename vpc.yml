@@ -14,7 +14,7 @@ Parameters:
     Project:
         Description: 'Project name this VPC is has been created for'
         Type: 'String'
-        Default: 'CHANGE ME'
+        Default: 'Weapon X'
 
     Creator:
         Description: 'Tool or person creating this VPC'
@@ -30,14 +30,6 @@ Parameters:
         Description: 'Notes to apply, normally edited in the console.'
         Type: 'String'
         Default: 'No notes'
-
-Mappings:
-    VPCRanges:
-        subnets:
-            PublicSubnetZone1: '10.0.10.0/24'
-            PrivateSubnetAZ1: '10.0.20.0/24'
-            PublicSubnetAZ2: '10.0.30.0/24'
-            PrivateSubnetAZ2: '10.0.40.0/24'
 
 Resources:
     VPC:
@@ -95,6 +87,7 @@ Resources:
                       Ref: 'Environment'
                 - Key: 'Freetext'
                   Value: 'No notes'
+
     PrivateSubnetZone1:
         Type: 'AWS::EC2::Subnet'
         Properties:
@@ -125,17 +118,94 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    PublicSubnetZone2:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            AvailabilityZone:
+                Fn::Select:
+                - '1'
+                - Fn::GetAZs:
+                    Ref: AWS::Region
+            CidrBlock: '10.0.30.0/24'
+            MapPublicIpOnLaunch: 'True'
+            VpcId:
+                Ref: VPC
+            Tags:
+                - Key: 'Name'
+                  Value: 'Public Zone 2'
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'Public for', !Ref Project ] ]
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+
+    PrivateSubnetZone2:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            AvailabilityZone:
+                Fn::Select:
+                - '1'
+                - Fn::GetAZs:
+                    Ref: AWS::Region
+            CidrBlock: '10.0.40.0/24'
+            MapPublicIpOnLaunch: 'False'
+            VpcId:
+                Ref: VPC
+            Tags:
+                - Key: 'Name'
+                  Value: 'Private Zone 2'
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'Private for', !Ref Project ] ]
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
 
 Outputs:
     VPCID:
         Description: 'VPC ID'
         Value:
             Ref: VPC
+        Export:
+            Name: !Join [ ":", [ !Ref "AWS::StackName", VPCID ] ]
     PublicSubnet1:
         Description: 'Zone 1 Public Subnet ID'
         Value:
             Ref: PublicSubnetZone1
+        Export:
+            Name: !Join [ ":", [ !Ref "AWS::StackName", PublicSubnet1 ] ]
     PrivateSubnet1:
         Description: 'Zone 1 Private Subnet ID'
         Value:
             Ref: PrivateSubnetZone1
+        Export:
+            Name: !Join [ ":", [ !Ref "AWS::StackName", PrivateSubnet1 ] ]
+    PublicSubnet2:
+        Description: 'Zone 2 Public Subnet ID'
+        Value:
+            Ref: PublicSubnetZone2
+        Export:
+            Name: !Join [ ":", [ !Ref "AWS::StackName", PublicSubnet2 ] ]
+    PrivateSubnet2:
+        Description: 'Zone 2 Private Subnet ID'
+        Value:
+            Ref: PrivateSubnetZone2
+        Export:
+            Name: !Join [ ":", [ !Ref "AWS::StackName", PrivateSubnet2 ] ]
