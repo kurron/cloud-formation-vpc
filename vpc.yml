@@ -1,0 +1,67 @@
+---
+# Cannot get this to work for some reason    
+#AWSTemplateFormatVersion: AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+    This template creates a new VPC, using best practices including:
+      * multi-availability zone subnets
+      * public and private subnets
+      * bastion servers for SSH access
+      * consistent tagging for cost reporting
+
+Metadata:
+    Foo:
+        Description: "something clever"
+    Bar:
+        Description: "something clever"
+
+Parameters:
+    Project:
+        Description: "Project name this VPC is has been created for"
+        Type: "String"
+        Default: "CHANGE ME"
+
+    Creator:
+        Description: "Tool or person creating this VPC"
+        Type: "String"
+        Default: "CloudFormation"
+
+    Environment:
+        Description: "Context the VPC will be used in.  Common values are production, testing and development."
+        Type: "String"
+        Default: "development"
+
+Mappings:
+    VPCRanges:
+        10.0.0.0:
+            PublicSubnetAZ1: "10.0.10.0/24"
+            PrivateSubnetAZ1: "10.0.20.0/24"
+            PublicSubnetAZ2: "10.0.30.0/24"
+            PrivateSubnetAZ2: "10.0.40.0/24"
+
+Resources:
+    VPCBase:
+        Type: "AWS::EC2::VPC"
+        Properties:
+            CidrBlock: '10.0.0.0/16'
+            EnableDnsSupport: 'false'
+            EnableDnsHostnames: 'false'
+            InstanceTenancy: 'dedicated'
+            Tags:
+                - Key: 'Project'
+                  Value: 'bar'
+                - Key: 'Purpose'
+                  Value: 'bar'
+                - Key: 'Creator'
+                  Value: 'bar'
+                - Key: 'Environment'
+                  Value: 'bar'
+                - Key: 'Freetext'
+                  Value: 'bar'
+
+Outputs:
+    Foo:
+        Description: "blah"
+        Value: "bar"
+        Export:
+            Name: "bob"
