@@ -1,13 +1,8 @@
 ---
-# Cannot get this to work for some reason    
+# Cannot get this to work for some reason
 #AWSTemplateFormatVersion: AWSTemplateFormatVersion: "2010-09-09"
 
-Description: >
-    This template creates a new VPC, using best practices including:
-      * multi-availability zone subnets
-      * public and private subnets
-      * bastion servers for SSH access
-      * consistent tagging for cost reporting
+Description: This template creates a new VPC, using best practices.
 
 Metadata:
     Foo:
@@ -31,6 +26,11 @@ Parameters:
         Type: "String"
         Default: "development"
 
+    Notes:
+        Description: "Notes to apply, normally edited in the console."
+        Type: "String"
+        Default: "No notes"
+
 Mappings:
     VPCRanges:
         10.0.0.0:
@@ -48,16 +48,23 @@ Resources:
             EnableDnsHostnames: 'false'
             InstanceTenancy: 'dedicated'
             Tags:
+                - Key: 'Name'
+                  Value:
+                      Ref: AWS::StackName
                 - Key: 'Project'
-                  Value: 'bar'
+                  Value:
+                      Ref: 'Project'
                 - Key: 'Purpose'
-                  Value: 'bar'
+                  Value:
+                      "Fn::Join": [ ' ', [ 'VPC for project', !Ref Project ] ]
                 - Key: 'Creator'
-                  Value: 'bar'
+                  Value:
+                      Ref: 'Creator'
                 - Key: 'Environment'
-                  Value: 'bar'
+                  Value:
+                      Ref: 'Environment'
                 - Key: 'Freetext'
-                  Value: 'bar'
+                  Value: 'No notes'
 
 Outputs:
     Foo:
