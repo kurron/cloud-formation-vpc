@@ -241,6 +241,23 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePublic
 
+    RouteAssociationPublicSubnetZoneA:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId:
+                Ref: PublicSubnetZoneA
+            RouteTableId:
+                Ref: RouteTablePublic
+
+    RouteAssociationPublicSubnetZoneB:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId:
+                Ref: PublicSubnetZoneB
+            RouteTableId:
+                Ref: RouteTablePublic
+
+
 Outputs:
     VPC:
         Description: 'Virtual Private Cloud'
