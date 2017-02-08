@@ -296,11 +296,6 @@ Resources:
         Properties:
             Domain: vpc
 
-    ElasticIpZoneB:
-        Type: AWS::EC2::EIP
-        Properties:
-            Domain: vpc
-
     NatGatewayZoneA:
         Type: AWS::EC2::NatGateway
         DependsOn: InternetGateway
@@ -311,17 +306,6 @@ Resources:
                     - AllocationId
             SubnetId:
                 Ref: PrivateSubnetZoneA
-
-    NatGatewayZoneB:
-        Type: AWS::EC2::NatGateway
-        DependsOn: InternetGateway
-        Properties:
-            AllocationId:
-                Fn::GetAtt:
-                    - ElasticIpZoneB
-                    - AllocationId
-            SubnetId:
-                Ref: PrivateSubnetZoneB
 
     RouteTablePrivateZoneA:
         Type: AWS::EC2::RouteTable
@@ -399,9 +383,38 @@ Resources:
         Properties:
             DestinationCidrBlock: 0.0.0.0/0
             NatGatewayId:
-                Ref: NatGatewayZoneB
+                Ref: NatGatewayZoneA
             RouteTableId:
                 Ref: RouteTablePrivateZoneB
+
+    BastionSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: 'SSH traffic only'
+            VpcId:
+                Ref: VPC
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  FromPort: '22'
+                  ToPort: '22'
+                  CidrIp: 0.0.0.0/0
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'Bastion', !Ref Project ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'SSH access to bastion hosts'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
 
 
 Outputs:
@@ -447,9 +460,3 @@ Outputs:
             Ref: ElasticIpZoneA
         Export:
             Name: !Join [ ':', [ !Ref 'AWS::StackName', 'Zone-A', ElasticIpZoneA ] ]
-    ElasticIpZoneB:
-        Description: 'Public IP of the NAT Gateway in zone B'
-        Value:
-            Ref: ElasticIpZoneB
-        Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', 'Zone-B', ElasticIpZoneA ] ]
