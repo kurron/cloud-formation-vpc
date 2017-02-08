@@ -199,13 +199,21 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    GatewayAttachment:
+        Type: AWS::EC2::VPCGatewayAttachment
+        Properties:
+            InternetGatewayId:
+                Ref: InternetGateway
+            VpcId:
+                Ref: VPC
+
 Outputs:
-    VPCID:
-        Description: 'VPC ID'
+    VPC:
+        Description: 'Virtual Private Cloud'
         Value:
             Ref: VPC
         Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', VPCID ] ]
+            Name: !Join [ ':', [ !Ref 'AWS::StackName', VPC ] ]
     PublicSubnetA:
         Description: 'Zone A Public Subnet ID'
         Value:
@@ -235,4 +243,4 @@ Outputs:
         Value:
             Ref: InternetGateway
         Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', Gateway ] ]
+            Name: !Join [ ':', [ !Ref 'AWS::StackName', IGW ] ]
