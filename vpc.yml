@@ -10,6 +10,7 @@ Metadata:
     Bar:
         Description: 'something clever'
 
+# These show up in the console and are expected to be provided by the operator
 Parameters:
     Project:
         Description: 'Project name this VPC is has been created for'
@@ -32,12 +33,13 @@ Parameters:
         Default: 'No notes'
 
 Resources:
+    # Create the VPC
     VPC:
         Type: 'AWS::EC2::VPC'
         Properties:
             CidrBlock: '10.0.0.0/16'
-            EnableDnsSupport: 'false'
-            EnableDnsHostnames: 'false'
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
             InstanceTenancy: 'default'
             Tags:
                 - Key: 'Name'
@@ -58,6 +60,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # create an internet accessable subnet in the first availability zone
     PublicSubnetZoneA:
         Type: 'AWS::EC2::Subnet'
         Properties:
@@ -88,6 +91,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # create a non-internet accessable subnet in the first availability zone
     PrivateSubnetZoneA:
         Type: 'AWS::EC2::Subnet'
         Properties:
@@ -118,6 +122,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # create an internet accessable subnet in the second availability zone
     PublicSubnetZoneB:
         Type: 'AWS::EC2::Subnet'
         Properties:
@@ -148,6 +153,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # create a non-internet accessable subnet in the second availability zone
     PrivateSubnetZoneB:
         Type: 'AWS::EC2::Subnet'
         Properties:
@@ -178,6 +184,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # create a gateway to the internet
     InternetGateway:
         Type: 'AWS::EC2::InternetGateway'
         Properties:
@@ -199,6 +206,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # associate the gateway to the VPC
     GatewayAttachment:
         Type: AWS::EC2::VPCGatewayAttachment
         Properties:
@@ -207,6 +215,7 @@ Resources:
             VpcId:
                 Ref: VPC
 
+    # create the routing table for the public subnet in availability zone A
     RouteTablePublicZoneA:
         Type: AWS::EC2::RouteTable
         Properties:
@@ -215,7 +224,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ':', [ 'Public', !Ref Project, 'Zone-A' ] ]
+                      'Fn::Join': [ ':', [ 'Public', !Ref Project, 'Zone A' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -230,6 +239,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # create the routing table for the public subnet in availability zone B
     RouteTablePublicZoneB:
         Type: AWS::EC2::RouteTable
         Properties:
@@ -238,7 +248,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ':', [ 'Public', !Ref Project, 'Zone-B' ] ]
+                      'Fn::Join': [ ':', [ 'Public', !Ref Project, 'Zone B' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -253,6 +263,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # route traffic through the internet gateway
     RoutePublicZoneA:
         DependsOn:
             - InternetGateway
@@ -264,6 +275,7 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePublicZoneA
 
+    # route traffic through the internet gateway
     RoutePublicZoneB:
         DependsOn:
             - InternetGateway
@@ -275,6 +287,7 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePublicZoneB
 
+    # associate public subnet to its routing table
     RouteAssociationPublicSubnetZoneA:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
@@ -283,6 +296,7 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePublicZoneA
 
+    # associate public subnet to its routing table
     RouteAssociationPublicSubnetZoneB:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
@@ -291,11 +305,15 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePublicZoneB
 
+    # we need an EIP for the NAT gateway
     ElasticIpZoneA:
+        DependsOn: GatewayAttachment
         Type: AWS::EC2::EIP
         Properties:
             Domain: vpc
 
+    # place the NAT gateway into a public subnet (it needs internet access)
+    # putting a second NAT gateway into the other public subnet for failover is recommended but costs a little extra $$$
     NatGatewayZoneA:
         Type: AWS::EC2::NatGateway
         DependsOn: InternetGateway
@@ -305,8 +323,9 @@ Resources:
                     - ElasticIpZoneA
                     - AllocationId
             SubnetId:
-                Ref: PrivateSubnetZoneA
+                Ref: PublicSubnetZoneA
 
+    # create a routing table for the private subnet in availability zone A
     RouteTablePrivateZoneA:
         Type: AWS::EC2::RouteTable
         Properties:
@@ -315,7 +334,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ' ', [ 'Private', !Ref Project, 'Zone A' ] ]
+                      'Fn::Join': [ ':', [ 'Private', !Ref Project, 'Zone A' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -330,6 +349,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # create a routing table for the private subnet in availability zone B
     RouteTablePrivateZoneB:
         Type: AWS::EC2::RouteTable
         Properties:
@@ -338,7 +358,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ' ', [ 'Private', !Ref Project, 'Zone B' ] ]
+                      'Fn::Join': [ ':', [ 'Private', !Ref Project, 'Zone B' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -353,6 +373,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # associate the private subnet with its routing table
     RouteAssociationPrivateSubnetZoneA:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
@@ -361,6 +382,7 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePrivateZoneA
 
+    # associate the private subnet with its routing table
     RouteAssociationPrivateSubnetZoneB:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
@@ -369,6 +391,7 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePrivateZoneB
 
+    # route outbound traffic to the NAT gateway
     NatRouteZoneA:
         Type: AWS::EC2::Route
         Properties:
@@ -378,6 +401,7 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePrivateZoneA
 
+    # route outbound traffic to the NAT gateway
     NatRouteZoneB:
         Type: AWS::EC2::Route
         Properties:
@@ -387,6 +411,7 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePrivateZoneB
 
+    # locked down the bastion servers so only inbound SSH is allowed
     BastionSecurityGroup:
         Type: AWS::EC2::SecurityGroup
         Properties:
@@ -395,8 +420,8 @@ Resources:
                 Ref: VPC
             SecurityGroupIngress:
                 - IpProtocol: tcp
-                  FromPort: '22'
-                  ToPort: '22'
+                  FromPort: 22
+                  ToPort: 22
                   CidrIp: 0.0.0.0/0
             Tags:
                 - Key: 'Name'
@@ -415,6 +440,67 @@ Resources:
                       Ref: 'Environment'
                 - Key: 'Freetext'
                   Value: 'No notes'
+
+    # limit inbound access from the bastion boxes only -- primarily for testing of the network settings
+    FromBastionSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: 'Access from the bastion boxes only'
+            VpcId:
+                Ref: VPC
+            SecurityGroupIngress:
+                - IpProtocol: '-1'
+                  FromPort: 0
+                  ToPort: 65535
+                  SourceSecurityGroupId:
+                      Ref: BastionSecurityGroup
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'From Bastion', !Ref Project ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'Access only from Bastion hosts'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'Only useful for network testing'
+
+    # unlimited inbound access -- primarily for testing of the network settings
+    WideOpenSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: 'Access from anywhere'
+            VpcId:
+                Ref: VPC
+            SecurityGroupIngress:
+                - IpProtocol: '-1'
+                  FromPort: 0
+                  ToPort: 65535
+                  CidrIp: 0.0.0.0/0
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'Wide Open', !Ref Project ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'Access only from all hosts'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'Only useful for network testing'
 
 
 Outputs:
