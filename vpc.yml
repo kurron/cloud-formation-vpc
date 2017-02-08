@@ -38,7 +38,7 @@ Resources:
             CidrBlock: '10.0.0.0/16'
             EnableDnsSupport: 'false'
             EnableDnsHostnames: 'false'
-            InstanceTenancy: 'dedicated'
+            InstanceTenancy: 'default'
             Tags:
                 - Key: 'Name'
                   Value:
@@ -189,7 +189,7 @@ Resources:
                   Value:
                       Ref: 'Project'
                 - Key: 'Purpose'
-                  Value: 'Controls network traffic leaving the VPC'
+                  Value: 'Controls network traffic entering and leaving the VPC'
                 - Key: 'Creator'
                   Value:
                       Ref: 'Creator'
@@ -207,7 +207,7 @@ Resources:
             VpcId:
                 Ref: VPC
 
-    RouteTablePublic:
+    RouteTablePublicZoneA:
         Type: AWS::EC2::RouteTable
         Properties:
             VpcId:
@@ -215,7 +215,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ' ', [ 'Public', !Ref Project ] ]
+                      'Fn::Join': [ ':', [ 'Public', !Ref Project, 'Zone-A' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -230,7 +230,30 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
-    RoutePublicDefault:
+    RouteTablePublicZoneB:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId:
+                Ref: VPC
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ':', [ 'Public', !Ref Project, 'Zone-B' ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'Public subnet routing'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+
+    RoutePublicZoneA:
         DependsOn:
             - InternetGateway
         Type: AWS::EC2::Route
@@ -239,7 +262,18 @@ Resources:
             GatewayId:
                 Ref: InternetGateway
             RouteTableId:
-                Ref: RouteTablePublic
+                Ref: RouteTablePublicZoneA
+
+    RoutePublicZoneB:
+        DependsOn:
+            - InternetGateway
+        Type: AWS::EC2::Route
+        Properties:
+            DestinationCidrBlock: 0.0.0.0/0
+            GatewayId:
+                Ref: InternetGateway
+            RouteTableId:
+                Ref: RouteTablePublicZoneB
 
     RouteAssociationPublicSubnetZoneA:
         Type: AWS::EC2::SubnetRouteTableAssociation
@@ -247,7 +281,7 @@ Resources:
             SubnetId:
                 Ref: PublicSubnetZoneA
             RouteTableId:
-                Ref: RouteTablePublic
+                Ref: RouteTablePublicZoneA
 
     RouteAssociationPublicSubnetZoneB:
         Type: AWS::EC2::SubnetRouteTableAssociation
@@ -255,7 +289,119 @@ Resources:
             SubnetId:
                 Ref: PublicSubnetZoneB
             RouteTableId:
-                Ref: RouteTablePublic
+                Ref: RouteTablePublicZoneB
+
+    ElasticIpZoneA:
+        Type: AWS::EC2::EIP
+        Properties:
+            Domain: vpc
+
+    ElasticIpZoneB:
+        Type: AWS::EC2::EIP
+        Properties:
+            Domain: vpc
+
+    NatGatewayZoneA:
+        Type: AWS::EC2::NatGateway
+        DependsOn: InternetGateway
+        Properties:
+            AllocationId:
+                Fn::GetAtt:
+                    - ElasticIpZoneA
+                    - AllocationId
+            SubnetId:
+                Ref: PrivateSubnetZoneA
+
+    NatGatewayZoneB:
+        Type: AWS::EC2::NatGateway
+        DependsOn: InternetGateway
+        Properties:
+            AllocationId:
+                Fn::GetAtt:
+                    - ElasticIpZoneB
+                    - AllocationId
+            SubnetId:
+                Ref: PrivateSubnetZoneB
+
+    RouteTablePrivateZoneA:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId:
+                Ref: VPC
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'Private', !Ref Project, 'Zone A' ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'Private subnet routing'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+
+    RouteTablePrivateZoneB:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId:
+                Ref: VPC
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'Private', !Ref Project, 'Zone B' ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'Private subnet routing'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+
+    RouteAssociationPrivateSubnetZoneA:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId:
+                Ref: PrivateSubnetZoneA
+            RouteTableId:
+                Ref: RouteTablePrivateZoneA
+
+    RouteAssociationPrivateSubnetZoneB:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId:
+                Ref: PrivateSubnetZoneB
+            RouteTableId:
+                Ref: RouteTablePrivateZoneB
+
+    NatRouteZoneA:
+        Type: AWS::EC2::Route
+        Properties:
+            DestinationCidrBlock: 0.0.0.0/0
+            NatGatewayId:
+                Ref: NatGatewayZoneA
+            RouteTableId:
+                Ref: RouteTablePrivateZoneA
+
+    NatRouteZoneB:
+        Type: AWS::EC2::Route
+        Properties:
+            DestinationCidrBlock: 0.0.0.0/0
+            NatGatewayId:
+                Ref: NatGatewayZoneB
+            RouteTableId:
+                Ref: RouteTablePrivateZoneB
 
 
 Outputs:
@@ -295,3 +441,15 @@ Outputs:
             Ref: InternetGateway
         Export:
             Name: !Join [ ':', [ !Ref 'AWS::StackName', IGW ] ]
+    ElasticIpZoneA:
+        Description: 'Public IP of the NAT Gateway in zone A'
+        Value:
+            Ref: ElasticIpZoneA
+        Export:
+            Name: !Join [ ':', [ !Ref 'AWS::StackName', 'Zone-A', ElasticIpZoneA ] ]
+    ElasticIpZoneB:
+        Description: 'Public IP of the NAT Gateway in zone B'
+        Value:
+            Ref: ElasticIpZoneB
+        Export:
+            Name: !Join [ ':', [ !Ref 'AWS::StackName', 'Zone-B', ElasticIpZoneA ] ]
