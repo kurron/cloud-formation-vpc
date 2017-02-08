@@ -207,6 +207,40 @@ Resources:
             VpcId:
                 Ref: VPC
 
+    RouteTablePublic:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId:
+                Ref: VPC
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'Public', !Ref Project ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'Public subnet routing'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+
+    RoutePublicDefault:
+        DependsOn:
+            - InternetGateway
+        Type: AWS::EC2::Route
+        Properties:
+            DestinationCidrBlock: 0.0.0.0/0
+            GatewayId:
+                Ref: InternetGateway
+            RouteTableId:
+                Ref: RouteTablePublic
+
 Outputs:
     VPC:
         Description: 'Virtual Private Cloud'
