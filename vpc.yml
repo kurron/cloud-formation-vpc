@@ -178,6 +178,27 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    InternetGateway:
+        Type: 'AWS::EC2::InternetGateway'
+        Properties:
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'Controls network traffic leaving the VPC'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+
 Outputs:
     VPCID:
         Description: 'VPC ID'
@@ -209,3 +230,9 @@ Outputs:
             Ref: PrivateSubnetZoneB
         Export:
             Name: !Join [ ':', [ !Ref 'AWS::StackName', PrivateSubnetB ] ]
+    IGW:
+        Description: 'Internet Gateway'
+        Value:
+            Ref: InternetGateway
+        Export:
+            Name: !Join [ ':', [ !Ref 'AWS::StackName', Gateway ] ]
