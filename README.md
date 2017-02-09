@@ -54,6 +54,9 @@ This form provides the following:
 There is a convenience script for destroying VPCs.  run
 `scripts/destroy-stack.sh production-vpc` to destroy the VPC we created above.
 
+## Creation Via The Console
+TODO: need to talk about getting the `vpc.yml` file into S3 so tha the console can see it
+
 # Troubleshooting
 
 ## Elastic IPs

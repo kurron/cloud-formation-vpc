@@ -66,7 +66,7 @@ Resources:
                       Ref: 'Project'
                 - Key: 'Purpose'
                   Value:
-                      'Fn::Join': [ ' ', [ 'VPC for project', !Ref Project ] ]
+                      'Fn::Join': [ ' ', [ 'VPC for project', !Ref 'Project' ] ]
                 - Key: 'Creator'
                   Value:
                       Ref: 'Creator'
@@ -84,11 +84,11 @@ Resources:
                 Fn::Select:
                 - '0'
                 - Fn::GetAZs:
-                    Ref: AWS::Region
+                    Ref: 'AWS::Region'
             CidrBlock: '10.0.10.0/24'
             MapPublicIpOnLaunch: 'True'
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
             Tags:
                 - Key: 'Name'
                   Value:
@@ -98,7 +98,7 @@ Resources:
                       Ref: 'Project'
                 - Key: 'Purpose'
                   Value:
-                      'Fn::Join': [ ' ', [ 'Public for', !Ref Project ] ]
+                      'Fn::Join': [ ' ', [ 'Public for', !Ref 'Project' ] ]
                 - Key: 'Creator'
                   Value:
                       Ref: 'Creator'
@@ -116,11 +116,11 @@ Resources:
                 Fn::Select:
                 - '0'
                 - Fn::GetAZs:
-                    Ref: AWS::Region
+                    Ref: 'AWS::Region'
             CidrBlock: '10.0.20.0/24'
             MapPublicIpOnLaunch: 'False'
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
             Tags:
                 - Key: 'Name'
                   Value:
@@ -130,7 +130,7 @@ Resources:
                       Ref: 'Project'
                 - Key: 'Purpose'
                   Value:
-                      'Fn::Join': [ ' ', [ 'Private for', !Ref Project ] ]
+                      'Fn::Join': [ ' ', [ 'Private for', !Ref 'Project' ] ]
                 - Key: 'Creator'
                   Value:
                       Ref: 'Creator'
@@ -148,11 +148,11 @@ Resources:
                 Fn::Select:
                 - '1'
                 - Fn::GetAZs:
-                    Ref: AWS::Region
+                    Ref: 'AWS::Region'
             CidrBlock: '10.0.30.0/24'
             MapPublicIpOnLaunch: 'True'
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
             Tags:
                 - Key: 'Name'
                   Value:
@@ -162,7 +162,7 @@ Resources:
                       Ref: 'Project'
                 - Key: 'Purpose'
                   Value:
-                      'Fn::Join': [ ' ', [ 'Public for', !Ref Project ] ]
+                      'Fn::Join': [ ' ', [ 'Public for', !Ref 'Project' ] ]
                 - Key: 'Creator'
                   Value:
                       Ref: 'Creator'
@@ -180,11 +180,11 @@ Resources:
                 Fn::Select:
                 - '1'
                 - Fn::GetAZs:
-                    Ref: AWS::Region
+                    Ref: 'AWS::Region'
             CidrBlock: '10.0.40.0/24'
             MapPublicIpOnLaunch: 'False'
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
             Tags:
                 - Key: 'Name'
                   Value:
@@ -194,7 +194,7 @@ Resources:
                       Ref: 'Project'
                 - Key: 'Purpose'
                   Value:
-                      'Fn::Join': [ ' ', [ 'Private for', !Ref Project ] ]
+                      'Fn::Join': [ ' ', [ 'Private for', !Ref 'Project' ] ]
                 - Key: 'Creator'
                   Value:
                       Ref: 'Creator'
@@ -211,7 +211,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      Ref: !Ref 'AWS::StackName'
+                      Ref: 'AWS::StackName'
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -231,16 +231,16 @@ Resources:
         Type: AWS::EC2::VPCGatewayAttachment
         Properties:
             InternetGatewayId:
-                Ref: InternetGateway
+                Ref: 'InternetGateway'
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
 
     # create the routing table for the public subnet in availability zone A
     RouteTablePublicZoneA:
         Type: AWS::EC2::RouteTable
         Properties:
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
             Tags:
                 - Key: 'Name'
                   Value:
@@ -264,7 +264,7 @@ Resources:
         Type: AWS::EC2::RouteTable
         Properties:
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
             Tags:
                 - Key: 'Name'
                   Value:
@@ -291,9 +291,9 @@ Resources:
         Properties:
             DestinationCidrBlock: 0.0.0.0/0
             GatewayId:
-                Ref: InternetGateway
+                Ref: 'InternetGateway'
             RouteTableId:
-                Ref: RouteTablePublicZoneA
+                Ref: 'RouteTablePublicZoneA'
 
     # route traffic through the internet gateway
     RoutePublicZoneB:
@@ -303,38 +303,40 @@ Resources:
         Properties:
             DestinationCidrBlock: 0.0.0.0/0
             GatewayId:
-                Ref: InternetGateway
+                Ref: 'InternetGateway'
             RouteTableId:
-                Ref: RouteTablePublicZoneB
+                Ref: 'RouteTablePublicZoneB'
 
     # associate public subnet to its routing table
     RouteAssociationPublicSubnetZoneA:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
             SubnetId:
-                Ref: PublicSubnetZoneA
+                Ref: 'PublicSubnetZoneA'
             RouteTableId:
-                Ref: RouteTablePublicZoneA
+                Ref: 'RouteTablePublicZoneA'
 
     # associate public subnet to its routing table
     RouteAssociationPublicSubnetZoneB:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
             SubnetId:
-                Ref: PublicSubnetZoneB
+                Ref: 'PublicSubnetZoneB'
             RouteTableId:
-                Ref: RouteTablePublicZoneB
+                Ref: 'RouteTablePublicZoneB'
 
     # we need an EIP for the zone A NAT gateway
     ElasticIpZoneA:
-        DependsOn: GatewayAttachment
+        DependsOn:
+            - GatewayAttachment
         Type: AWS::EC2::EIP
         Properties:
             Domain: vpc
 
     # we need an EIP for the zone B NAT gateway
     ElasticIpZoneB:
-        DependsOn: GatewayAttachment
+        DependsOn:
+            - GatewayAttachment
         Type: AWS::EC2::EIP
         Properties:
             Domain: vpc
@@ -342,33 +344,35 @@ Resources:
     # place the zone A NAT gateway into the public subnet (it needs internet access)
     NatGatewayZoneA:
         Type: AWS::EC2::NatGateway
-        DependsOn: InternetGateway
+        DependsOn:
+            - InternetGateway
         Properties:
             AllocationId:
                 Fn::GetAtt:
                     - ElasticIpZoneA
                     - AllocationId
             SubnetId:
-                Ref: PublicSubnetZoneA
+                Ref: 'PublicSubnetZoneA'
 
     # place the zone B NAT gateway into the public subnet (it needs internet access)
     NatGatewayZoneB:
         Type: AWS::EC2::NatGateway
-        DependsOn: InternetGateway
+        DependsOn:
+            - InternetGateway
         Properties:
             AllocationId:
                 Fn::GetAtt:
                     - ElasticIpZoneB
                     - AllocationId
             SubnetId:
-                Ref: PublicSubnetZoneB
+                Ref: 'PublicSubnetZoneB'
 
     # create a routing table for the private subnet in availability zone A
     RouteTablePrivateZoneA:
         Type: AWS::EC2::RouteTable
         Properties:
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
             Tags:
                 - Key: 'Name'
                   Value:
@@ -392,7 +396,7 @@ Resources:
         Type: AWS::EC2::RouteTable
         Properties:
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
             Tags:
                 - Key: 'Name'
                   Value:
@@ -416,18 +420,18 @@ Resources:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
             SubnetId:
-                Ref: PrivateSubnetZoneA
+                Ref: 'PrivateSubnetZoneA'
             RouteTableId:
-                Ref: RouteTablePrivateZoneA
+                Ref: 'RouteTablePrivateZoneA'
 
     # associate the private subnet with its routing table
     RouteAssociationPrivateSubnetZoneB:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
             SubnetId:
-                Ref: PrivateSubnetZoneB
+                Ref: 'PrivateSubnetZoneB'
             RouteTableId:
-                Ref: RouteTablePrivateZoneB
+                Ref: 'RouteTablePrivateZoneB'
 
     # route outbound traffic to the zone A NAT gateway
     NatRouteZoneA:
@@ -435,9 +439,9 @@ Resources:
         Properties:
             DestinationCidrBlock: 0.0.0.0/0
             NatGatewayId:
-                Ref: NatGatewayZoneA
+                Ref: 'NatGatewayZoneA'
             RouteTableId:
-                Ref: RouteTablePrivateZoneA
+                Ref: 'RouteTablePrivateZoneA'
 
     # route outbound traffic to the zone B NAT gateway
     NatRouteZoneB:
@@ -445,9 +449,9 @@ Resources:
         Properties:
             DestinationCidrBlock: 0.0.0.0/0
             NatGatewayId:
-                Ref: NatGatewayZoneB
+                Ref: 'NatGatewayZoneB'
             RouteTableId:
-                Ref: RouteTablePrivateZoneB
+                Ref: 'RouteTablePrivateZoneB'
 
     # locked down the bastion servers so only inbound SSH is allowed
     BastionSecurityGroup:
@@ -455,7 +459,7 @@ Resources:
         Properties:
             GroupDescription: 'SSH traffic only'
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
             SecurityGroupIngress:
                 - IpProtocol: tcp
                   FromPort: 22
@@ -485,13 +489,13 @@ Resources:
         Properties:
             GroupDescription: 'Access from the bastion boxes only'
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
             SecurityGroupIngress:
                 - IpProtocol: '-1'
                   FromPort: 0
                   ToPort: 65535
                   SourceSecurityGroupId:
-                      Ref: BastionSecurityGroup
+                      Ref: 'BastionSecurityGroup'
             Tags:
                 - Key: 'Name'
                   Value:
@@ -516,7 +520,7 @@ Resources:
         Properties:
             GroupDescription: 'Access from anywhere'
             VpcId:
-                Ref: VPC
+                Ref: 'VPC'
             SecurityGroupIngress:
                 - IpProtocol: '-1'
                   FromPort: 0
@@ -548,7 +552,7 @@ Resources:
             ImageId:
                 Fn::FindInMap:
                     - RegionToAmazonAMI
-                    - Ref: AWS::Region
+                    - Ref: 'AWS::Region'
                     - HVM64
             InstanceInitiatedShutdownBehavior:  stop
             InstanceType: t2.nano
@@ -556,10 +560,10 @@ Resources:
                 Ref: 'SshKeyName'
             Monitoring: False
             SecurityGroupIds:
-                - !Ref BastionSecurityGroup
+                - !Ref 'BastionSecurityGroup'
             SourceDestCheck: true
             SubnetId:
-                Ref: PublicSubnetZoneA
+                Ref: 'PublicSubnetZoneA'
             Tenancy: default
             Tags:
                 - Key: 'Name'
@@ -587,7 +591,7 @@ Resources:
             ImageId:
                 Fn::FindInMap:
                     - RegionToAmazonAMI
-                    - Ref: AWS::Region
+                    - Ref: 'AWS::Region'
                     - HVM64
             InstanceInitiatedShutdownBehavior:  stop
             InstanceType: t2.nano
@@ -595,10 +599,10 @@ Resources:
                 Ref: 'SshKeyName'
             Monitoring: False
             SecurityGroupIds:
-                - !Ref BastionSecurityGroup
+                - !Ref 'BastionSecurityGroup'
             SourceDestCheck: true
             SubnetId:
-                Ref: PublicSubnetZoneA
+                Ref: 'PublicSubnetZoneA'
             Tenancy: default
             Tags:
                 - Key: 'Name'
@@ -622,31 +626,31 @@ Outputs:
     VPC:
         Description: 'Virtual Private Cloud'
         Value:
-            Ref: VPC
+            Ref: 'VPC'
         Export:
             Name: !Join [ ':', [ !Ref 'AWS::StackName', VPC ] ]
     PublicSubnetA:
         Description: 'Zone A Public Subnet ID'
         Value:
-            Ref: PublicSubnetZoneA
+            Ref: 'PublicSubnetZoneA'
         Export:
             Name: !Join [ ':', [ !Ref 'AWS::StackName', PublicSubnetA ] ]
     PrivateSubnetA:
         Description: 'Zone A Private Subnet ID'
         Value:
-            Ref: PrivateSubnetZoneA
+            Ref: 'PrivateSubnetZoneA'
         Export:
             Name: !Join [ ':', [ !Ref 'AWS::StackName', PrivateSubnetA ] ]
     PublicSubnetB:
         Description: 'Zone B Public Subnet ID'
         Value:
-            Ref: PublicSubnetZoneB
+            Ref: 'PublicSubnetZoneB'
         Export:
             Name: !Join [ ':', [ !Ref 'AWS::StackName', PublicSubnetB ] ]
     PrivateSubnet2:
         Description: 'Zone B Private Subnet ID'
         Value:
-            Ref: PrivateSubnetZoneB
+            Ref: 'PrivateSubnetZoneB'
         Export:
             Name: !Join [ ':', [ !Ref 'AWS::StackName', PrivateSubnetB ] ]
     BastionPublicAddressA:
