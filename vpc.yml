@@ -663,3 +663,8 @@ Outputs:
         Value: !GetAtt BastionZoneB.PublicIp
         Export:
             Name: 'BastionPublicAddressB'
+    SecurityGroupWideOpen:
+        Description: 'Group ID of the WideOpen security group'
+        Value: !GetAtt WideOpenSecurityGroup.GroupId
+        Export:
+            Name: 'SecurityGroupWideOpen'
