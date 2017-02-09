@@ -628,38 +628,38 @@ Outputs:
         Value:
             Ref: 'VPC'
         Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', VPC ] ]
+            Name: 'VPC'
     PublicSubnetA:
         Description: 'Zone A Public Subnet ID'
         Value:
             Ref: 'PublicSubnetZoneA'
         Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', PublicSubnetA ] ]
+            Name: 'PublicSubnetZoneA'
     PrivateSubnetA:
         Description: 'Zone A Private Subnet ID'
         Value:
             Ref: 'PrivateSubnetZoneA'
         Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', PrivateSubnetA ] ]
+            Name: 'PrivateSubnetZoneA'
     PublicSubnetB:
         Description: 'Zone B Public Subnet ID'
         Value:
             Ref: 'PublicSubnetZoneB'
         Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', PublicSubnetB ] ]
+            Name: 'PublicSubnetZoneB'
     PrivateSubnet2:
         Description: 'Zone B Private Subnet ID'
         Value:
             Ref: 'PrivateSubnetZoneB'
         Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', PrivateSubnetB ] ]
+            Name: 'PrivateSubnetZoneB'
     BastionPublicAddressA:
         Description: 'Public IP address of the zone A Bastion server'
         Value: !GetAtt BastionZoneA.PublicIp
         Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', BastionPublicAddressA ] ]
+            Name: 'BastionPublicAddressA'
     BastionPublicAddressB:
         Description: 'Public IP address of the zone B Bastion server'
         Value: !GetAtt BastionZoneB.PublicIp
         Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', BastionPublicAddressB ] ]
+            Name: 'BastionPublicAddressB'
