@@ -32,6 +32,22 @@ Parameters:
         Type: 'String'
         Default: 'No notes'
 
+    SshKeyName:
+        Description: 'Name of the key to use when creating the EC2 instances'
+        Type: 'String'
+        Default: 'asgard-lite-test'
+
+Mappings:
+    RegionToAmazonAMI:
+        us-east-1:
+            HVM64: ami-0b33d91d
+        us-east-2:
+            HVM64: ami-c55673a0
+        us-west-1:
+            HVM64: ami-165a0876
+        us-west-2:
+            HVM64: ami-f173cc91
+
 Resources:
     # Create the VPC
     VPC:
@@ -520,6 +536,44 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'Only useful for network testing'
 
+    BastionZoneA:
+        Type: AWS::EC2::Instance
+        Properties:
+            EbsOptimized: false
+            ImageId:
+                Fn::FindInMap:
+                    - RegionToAmazonAMI
+                    - Ref: AWS::Region
+                    - HVM64
+            InstanceInitiatedShutdownBehavior:  stop
+            InstanceType: t2.nano
+            KeyName:
+                Ref: 'SshKeyName'
+            Monitoring: False
+            SecurityGroupIds:
+                - !Ref BastionSecurityGroup
+            SourceDestCheck: true
+            SubnetId:
+                Ref: PublicSubnetZoneA
+            Tenancy: default
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ':', [ 'Bastion A', !Ref Project ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'Jump server'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'Usee SSH forwarding to simplify access to internal servers'
+
 
 Outputs:
     VPC:
@@ -552,15 +606,8 @@ Outputs:
             Ref: PrivateSubnetZoneB
         Export:
             Name: !Join [ ':', [ !Ref 'AWS::StackName', PrivateSubnetB ] ]
-    IGW:
-        Description: 'Internet Gateway'
-        Value:
-            Ref: InternetGateway
+    BastionPublicAddressA:
+        Description: 'Public IP address of the zone A Bastion server'
+        Value: !GetAtt BastionZoneA.PublicIp
         Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', IGW ] ]
-    ElasticIpZoneA:
-        Description: 'Public IP of the NAT Gateway in zone A'
-        Value:
-            Ref: ElasticIpZoneA
-        Export:
-            Name: !Join [ ':', [ !Ref 'AWS::StackName', 'Zone-A', ElasticIpZoneA ] ]
+            Name: !Join [ ':', [ !Ref 'AWS::StackName', BastionPublicAddressA ] ]
