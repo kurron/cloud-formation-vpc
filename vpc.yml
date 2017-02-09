@@ -305,15 +305,21 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePublicZoneB
 
-    # we need an EIP for the NAT gateway
+    # we need an EIP for the zone A NAT gateway
     ElasticIpZoneA:
         DependsOn: GatewayAttachment
         Type: AWS::EC2::EIP
         Properties:
             Domain: vpc
 
-    # place the NAT gateway into a public subnet (it needs internet access)
-    # putting a second NAT gateway into the other public subnet for failover is recommended but costs a little extra $$$
+    # we need an EIP for the zone B NAT gateway
+    ElasticIpZoneB:
+        DependsOn: GatewayAttachment
+        Type: AWS::EC2::EIP
+        Properties:
+            Domain: vpc
+
+    # place the zone A NAT gateway into the public subnet (it needs internet access)
     NatGatewayZoneA:
         Type: AWS::EC2::NatGateway
         DependsOn: InternetGateway
@@ -324,6 +330,18 @@ Resources:
                     - AllocationId
             SubnetId:
                 Ref: PublicSubnetZoneA
+
+    # place the zone B NAT gateway into the public subnet (it needs internet access)
+    NatGatewayZoneB:
+        Type: AWS::EC2::NatGateway
+        DependsOn: InternetGateway
+        Properties:
+            AllocationId:
+                Fn::GetAtt:
+                    - ElasticIpZoneB
+                    - AllocationId
+            SubnetId:
+                Ref: PublicSubnetZoneB
 
     # create a routing table for the private subnet in availability zone A
     RouteTablePrivateZoneA:
@@ -391,7 +409,7 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePrivateZoneB
 
-    # route outbound traffic to the NAT gateway
+    # route outbound traffic to the zone A NAT gateway
     NatRouteZoneA:
         Type: AWS::EC2::Route
         Properties:
@@ -401,13 +419,13 @@ Resources:
             RouteTableId:
                 Ref: RouteTablePrivateZoneA
 
-    # route outbound traffic to the NAT gateway
+    # route outbound traffic to the zone B NAT gateway
     NatRouteZoneB:
         Type: AWS::EC2::Route
         Properties:
             DestinationCidrBlock: 0.0.0.0/0
             NatGatewayId:
-                Ref: NatGatewayZoneA
+                Ref: NatGatewayZoneB
             RouteTableId:
                 Ref: RouteTablePrivateZoneB
 
