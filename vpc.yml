@@ -60,7 +60,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      Ref: 'Project'
+                      Ref: 'AWS::StackName'
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -91,7 +91,8 @@ Resources:
                 Ref: VPC
             Tags:
                 - Key: 'Name'
-                  Value: 'Public Zone A'
+                  Value:
+                      'Fn::Join': [ ':', [ 'Public', 'Zone A', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -122,7 +123,8 @@ Resources:
                 Ref: VPC
             Tags:
                 - Key: 'Name'
-                  Value: 'Private Zone A'
+                  Value:
+                      'Fn::Join': [ ':', [ 'Private', 'Zone A', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -153,7 +155,8 @@ Resources:
                 Ref: VPC
             Tags:
                 - Key: 'Name'
-                  Value: 'Public Zone B'
+                  Value:
+                      'Fn::Join': [ ':', [ 'Public', 'Zone B', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -184,7 +187,8 @@ Resources:
                 Ref: VPC
             Tags:
                 - Key: 'Name'
-                  Value: 'Private Zone B'
+                  Value:
+                      'Fn::Join': [ ':', [ 'Private', 'Zone B', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -207,7 +211,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      Ref: 'Project'
+                      Ref: !Ref 'AWS::StackName'
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -240,7 +244,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ':', [ 'Public', !Ref Project, 'Zone A' ] ]
+                      'Fn::Join': [ ':', [ 'Public', 'Zone A', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -264,7 +268,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ':', [ 'Public', !Ref Project, 'Zone B' ] ]
+                      'Fn::Join': [ ':', [ 'Public', 'Zone B', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -368,7 +372,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ':', [ 'Private', !Ref Project, 'Zone A' ] ]
+                      'Fn::Join': [ ':', [ 'Private', 'Zone A', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -392,7 +396,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ':', [ 'Private', !Ref Project, 'Zone B' ] ]
+                      'Fn::Join': [ ':', [ 'Private', 'Zone B', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -460,7 +464,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ' ', [ 'Bastion', !Ref Project ] ]
+                      'Fn::Join': [ ':', [ 'Bastion', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -491,7 +495,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ' ', [ 'From Bastion', !Ref Project ] ]
+                      'Fn::Join': [ ':', [ 'From Bastion Only', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -521,7 +525,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ' ', [ 'Wide Open', !Ref Project ] ]
+                      'Fn::Join': [ ':', [ 'Wide Open', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -534,7 +538,7 @@ Resources:
                   Value:
                       Ref: 'Environment'
                 - Key: 'Freetext'
-                  Value: 'Only useful for network testing'
+                  Value: 'Unsafe! Only useful for network testing.'
 
     # create a tiny jump server that allows SSH access to the private insances
     BastionZoneA:
@@ -560,7 +564,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ':', [ 'Bastion A', !Ref Project ] ]
+                      'Fn::Join': [ ':', [ 'Bastion', 'Zone A', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
@@ -599,7 +603,7 @@ Resources:
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ':', [ 'Bastion B', !Ref Project ] ]
+                      'Fn::Join': [ ':', [ 'Bastion', 'Zone B', !Ref 'AWS::StackName' ] ]
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
