@@ -602,7 +602,7 @@ Resources:
                 - !Ref 'BastionSecurityGroup'
             SourceDestCheck: true
             SubnetId:
-                Ref: 'PublicSubnetZoneA'
+                Ref: 'PublicSubnetZoneB'
             Tenancy: default
             Tags:
                 - Key: 'Name'
