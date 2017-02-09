@@ -504,7 +504,7 @@ Resources:
                   Value:
                       Ref: 'Environment'
                 - Key: 'Freetext'
-                  Value: 'Only useful for network testing'
+                  Value: 'Only traffic from instances using the bastion security group have access'
 
     # unlimited inbound access -- primarily for testing of the network settings
     WideOpenSecurityGroup:
@@ -536,6 +536,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'Only useful for network testing'
 
+    # create a tiny jump server that allows SSH access to the private insances
     BastionZoneA:
         Type: AWS::EC2::Instance
         Properties:
@@ -574,6 +575,44 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'Usee SSH forwarding to simplify access to internal servers'
 
+    # create a tiny jump server that allows SSH access to the private insances
+    BastionZoneB:
+        Type: AWS::EC2::Instance
+        Properties:
+            EbsOptimized: false
+            ImageId:
+                Fn::FindInMap:
+                    - RegionToAmazonAMI
+                    - Ref: AWS::Region
+                    - HVM64
+            InstanceInitiatedShutdownBehavior:  stop
+            InstanceType: t2.nano
+            KeyName:
+                Ref: 'SshKeyName'
+            Monitoring: False
+            SecurityGroupIds:
+                - !Ref BastionSecurityGroup
+            SourceDestCheck: true
+            SubnetId:
+                Ref: PublicSubnetZoneA
+            Tenancy: default
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ':', [ 'Bastion B', !Ref Project ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'Jump server'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'Usee SSH forwarding to simplify access to internal servers'
 
 Outputs:
     VPC:
@@ -611,3 +650,8 @@ Outputs:
         Value: !GetAtt BastionZoneA.PublicIp
         Export:
             Name: !Join [ ':', [ !Ref 'AWS::StackName', BastionPublicAddressA ] ]
+    BastionPublicAddressB:
+        Description: 'Public IP address of the zone B Bastion server'
+        Value: !GetAtt BastionZoneB.PublicIp
+        Export:
+            Name: !Join [ ':', [ !Ref 'AWS::StackName', BastionPublicAddressB ] ]
