@@ -647,7 +647,7 @@ Outputs:
             Ref: 'PublicSubnetZoneB'
         Export:
             Name: 'PublicSubnetZoneB'
-    PrivateSubnetZoneB:
+    PrivateSubnetB:
         Description: 'Zone B Private Subnet ID'
         Value:
             Ref: 'PrivateSubnetZoneB'
