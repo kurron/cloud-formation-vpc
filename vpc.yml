@@ -582,6 +582,14 @@ Resources:
                       Ref: 'Environment'
                 - Key: 'Freetext'
                   Value: 'Usee SSH forwarding to simplify access to internal servers'
+            UserData:
+                Fn::Base64: !Sub |
+                    #!/bin/bash -xe
+                    AWS_INSTANCE_ID=$( curl http://169.254.169.254/latest/meta-data/instance-id )
+                    echo "AWS_INSTANCE_ID=$AWS_INSTANCE_ID"
+                    ROOT_DISK_ID=$( aws ec2 describe-volumes --filter "Name=attachment.instance-id, Values=$AWS_INSTANCE_ID" --query "Volumes[].VolumeId" --out text )
+                    echo "ROOT_DISK_ID=$ROOT_DISK_ID"
+                    aws ec2 create-tags --resources $ROOT_DISK_ID --tags Key=Project,Value=${Project}
 
     # create a tiny jump server that allows SSH access to the private insances
     BastionZoneB:
