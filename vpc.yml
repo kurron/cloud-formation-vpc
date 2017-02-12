@@ -623,48 +623,32 @@ Resources:
                   Value: 'Usee SSH forwarding to simplify access to internal servers'
 
 Outputs:
-    One:
+    VPC:
         Description: 'Virtual Private Cloud'
         Value:
             Ref: 'VPC'
-        Export:
-            Name: 'VPC'
-    Two:
+    PublicSubnetZoneA:
         Description: 'Zone A Public Subnet ID'
         Value:
             Ref: 'PublicSubnetZoneA'
-        Export:
-            Name: 'PublicSubnetZoneA'
-    Three:
+    PrivateSubnetZoneA:
         Description: 'Zone A Private Subnet ID'
         Value:
             Ref: 'PrivateSubnetZoneA'
-        Export:
-            Name: 'PrivateSubnetZoneA'
-    Four:
+    PublicSubnetZoneB:
         Description: 'Zone B Public Subnet ID'
         Value:
             Ref: 'PublicSubnetZoneB'
-        Export:
-            Name: 'PublicSubnetZoneB'
-    Five:
+    PrivateSubnetZoneB:
         Description: 'Zone B Private Subnet ID'
         Value:
             Ref: 'PrivateSubnetZoneB'
-        Export:
-            Name: 'PrivateSubnetZoneB'
-    Six:
+    BastionPublicAddressA:
         Description: 'Public IP address of the zone A Bastion server'
         Value: !GetAtt BastionZoneA.PublicIp
-        Export:
-            Name: 'BastionPublicAddressA'
-    Seven:
+    BastionPublicAddressB:
         Description: 'Public IP address of the zone B Bastion server'
         Value: !GetAtt BastionZoneB.PublicIp
-        Export:
-            Name: 'BastionPublicAddressB'
-    Eight:
+    SecurityGroupWideOpen:
         Description: 'Group ID of the WideOpen security group'
         Value: !GetAtt WideOpenSecurityGroup.GroupId
-        Export:
-            Name: 'SecurityGroupWideOpen'
