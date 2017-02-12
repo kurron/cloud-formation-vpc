@@ -544,11 +544,50 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'Unsafe! Only useful for network testing.'
 
+    # Role needed by the EC2 instances so they can tag their EBS volumes
+    AmazonEC2FullAccessRole:
+        Type: 'AWS::IAM::Role'
+        Properties:
+            AssumeRolePolicyDocument:
+                Statement:
+                -
+                    Sid: ""
+                    Effect: "Allow"
+                    Principal:
+                        Service:
+                        - "ec2.amazonaws.com"
+                    Action:
+                    - "sts:AssumeRole"
+            Path: '/'
+            Policies:
+            -
+                PolicyName: "AmazonEC2FullAccess"
+                PolicyDocument:
+                    Statement:
+                    -
+                        Effect: "Allow"
+                        Action:
+                            - "ec2:*"
+                        Resource: "*"
+            # documentation suggests that providing a name will cause issues if updates are needed
+            RoleName: !Join [ '-', [ !Ref 'AWS::StackName', 'AmazonEC2FullAccessRole' ] ]
+
+    # EC2 instances will run using this profile
+    EC2FullAccessInstanceProfile:
+        Type: "AWS::IAM::InstanceProfile"
+        Properties:
+            Path: "/"
+            Roles:
+            -
+                Ref: "AmazonEC2FullAccessRole"
+
     # create a tiny jump server that allows SSH access to the private insances
     BastionZoneA:
         Type: AWS::EC2::Instance
         Properties:
             EbsOptimized: false
+            IamInstanceProfile:
+                Ref: 'EC2FullAccessInstanceProfile'
             ImageId:
                 Fn::FindInMap:
                     - RegionToAmazonAMI
@@ -587,15 +626,17 @@ Resources:
                     #!/bin/bash -xe
                     AWS_INSTANCE_ID=$( curl http://169.254.169.254/latest/meta-data/instance-id )
                     echo "AWS_INSTANCE_ID=$AWS_INSTANCE_ID"
-                    ROOT_DISK_ID=$( aws ec2 describe-volumes --filter "Name=attachment.instance-id, Values=$AWS_INSTANCE_ID" --query "Volumes[].VolumeId" --out text )
+                    ROOT_DISK_ID=$( aws ec2 describe-volumes --region ${AWS::Region} --filter "Name=attachment.instance-id, Values=$AWS_INSTANCE_ID" --query "Volumes[].VolumeId" --out text )
                     echo "ROOT_DISK_ID=$ROOT_DISK_ID"
-                    aws ec2 create-tags --resources $ROOT_DISK_ID --tags Key=Project,Value=${Project}
+                    aws ec2 create-tags  --region ${AWS::Region} --resources $ROOT_DISK_ID --tags Key=Project,Value='${Project}'
 
     # create a tiny jump server that allows SSH access to the private insances
     BastionZoneB:
         Type: AWS::EC2::Instance
         Properties:
             EbsOptimized: false
+            IamInstanceProfile:
+                Ref: 'EC2FullAccessInstanceProfile'
             ImageId:
                 Fn::FindInMap:
                     - RegionToAmazonAMI
@@ -629,6 +670,14 @@ Resources:
                       Ref: 'Environment'
                 - Key: 'Freetext'
                   Value: 'Usee SSH forwarding to simplify access to internal servers'
+            UserData:
+                Fn::Base64: !Sub |
+                    #!/bin/bash -xe
+                    AWS_INSTANCE_ID=$( curl http://169.254.169.254/latest/meta-data/instance-id )
+                    echo "AWS_INSTANCE_ID=$AWS_INSTANCE_ID"
+                    ROOT_DISK_ID=$( aws ec2 describe-volumes  --region ${AWS::Region} --filter "Name=attachment.instance-id, Values=$AWS_INSTANCE_ID" --query "Volumes[].VolumeId" --out text )
+                    echo "ROOT_DISK_ID=$ROOT_DISK_ID"
+                    aws ec2 create-tags  --region ${AWS::Region} --resources $ROOT_DISK_ID --tags Key=Project,Value='${Project}'
 
 Outputs:
     VPC:

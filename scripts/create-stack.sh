@@ -12,6 +12,9 @@ VALIDATE="aws cloudformation validate-template --template-body $TEMPLATELOCATION
 echo $VALIDATE
 $VALIDATE
 
-CREATE="aws cloudformation create-stack --stack-name $STACKNAME --template-body $TEMPLATELOCATION --tags Key=Project,Value=$PROJECTNAME Key=Environment,Value=$ENVIRONMENT Key=Creator,Value=$CREATOR"
+CREATE="aws cloudformation create-stack --stack-name $STACKNAME \
+                                        --template-body $TEMPLATELOCATION \
+                                        --capabilities CAPABILITY_NAMED_IAM \
+                                        --tags Key=Project,Value=$PROJECTNAME Key=Environment,Value=$ENVIRONMENT Key=Creator,Value=$CREATOR"
 echo $CREATE
 $CREATE
