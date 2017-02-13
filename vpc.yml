@@ -12,6 +12,11 @@ Metadata:
 
 # These show up in the console and are expected to be provided by the operator
 Parameters:
+    Network:
+        Description: 'The ip range to use when building out the VPC network'
+        Type: 'String'
+        Default: '10.0.0.0'
+
     Project:
         Description: 'Project name this VPC is has been created for'
         Type: 'String'
@@ -47,13 +52,30 @@ Mappings:
             HVM64: ami-165a0876
         us-west-2:
             HVM64: ami-f173cc91
+    NetworkToSubnet:
+        "10.0.0.0":
+            PublicSubnetZoneA: "10.0.10.0/24"
+            PrivateSubnetZoneA: "10.0.20.0/24"
+            PublicSubnetZoneB: "10.0.30.0/24"
+            PrivateSubnetZoneB: "10.0.40.0/24"
+        "172.16.0.0":
+            PublicSubnetZoneA: "172.16.10.0/24"
+            PrivateSubnetZoneA: "172.16.20.0/24"
+            PublicSubnetZoneB: "172.16.30.0/24"
+            PrivateSubnetZoneB: "172.16.40.0/24"
+        "192.168.0.0":
+            PublicSubnetZoneA: "192.168.10.0/24"
+            PrivateSubnetZoneA: "192.168.20.0/24"
+            PublicSubnetZoneB: "192.168.30.0/24"
+            PrivateSubnetZoneB: "192.168.40.0/24"
 
 Resources:
     # Create the VPC
     VPC:
         Type: 'AWS::EC2::VPC'
         Properties:
-            CidrBlock: '10.0.0.0/16'
+            CidrBlock:
+                'Fn::Join': [ '/', [ !Ref 'Network', '16' ] ]
             EnableDnsSupport: true
             EnableDnsHostnames: true
             InstanceTenancy: 'default'
@@ -85,7 +107,11 @@ Resources:
                 - '0'
                 - Fn::GetAZs:
                     Ref: 'AWS::Region'
-            CidrBlock: '10.0.10.0/24'
+            CidrBlock:
+                Fn::FindInMap:
+                - NetworkToSubnet
+                - Ref: 'Network'
+                - PublicSubnetZoneA
             MapPublicIpOnLaunch: 'True'
             VpcId:
                 Ref: 'VPC'
@@ -117,7 +143,11 @@ Resources:
                 - '0'
                 - Fn::GetAZs:
                     Ref: 'AWS::Region'
-            CidrBlock: '10.0.20.0/24'
+            CidrBlock:
+                Fn::FindInMap:
+                - NetworkToSubnet
+                - Ref: 'Network'
+                - PrivateSubnetZoneA
             MapPublicIpOnLaunch: 'False'
             VpcId:
                 Ref: 'VPC'
@@ -149,7 +179,11 @@ Resources:
                 - '1'
                 - Fn::GetAZs:
                     Ref: 'AWS::Region'
-            CidrBlock: '10.0.30.0/24'
+            CidrBlock:
+                Fn::FindInMap:
+                - NetworkToSubnet
+                - Ref: 'Network'
+                - PublicSubnetZoneB
             MapPublicIpOnLaunch: 'True'
             VpcId:
                 Ref: 'VPC'
@@ -181,7 +215,11 @@ Resources:
                 - '1'
                 - Fn::GetAZs:
                     Ref: 'AWS::Region'
-            CidrBlock: '10.0.40.0/24'
+            CidrBlock:
+                Fn::FindInMap:
+                - NetworkToSubnet
+                - Ref: 'Network'
+                - PrivateSubnetZoneB
             MapPublicIpOnLaunch: 'False'
             VpcId:
                 Ref: 'VPC'
@@ -289,7 +327,7 @@ Resources:
             - InternetGateway
         Type: AWS::EC2::Route
         Properties:
-            DestinationCidrBlock: 0.0.0.0/0
+            DestinationCidrBlock: '0.0.0.0/0'
             GatewayId:
                 Ref: 'InternetGateway'
             RouteTableId:
