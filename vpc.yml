@@ -619,9 +619,9 @@ Resources:
             -
                 Ref: "AmazonEC2FullAccessRole"
 
-    # create a tiny jump server that allows SSH access to the private insances
-    BastionZoneA:
-        Type: AWS::EC2::Instance
+    # auto scaling launch configuration for the Bastion servers
+    BastionLaunchConfiguration:
+        Type: AWS::AutoScaling::LaunchConfiguration
         Properties:
             EbsOptimized: false
             IamInstanceProfile:
@@ -631,34 +631,12 @@ Resources:
                     - RegionToAmazonAMI
                     - Ref: 'AWS::Region'
                     - HVM64
-            InstanceInitiatedShutdownBehavior:  stop
+            InstanceMonitoring: false
             InstanceType: t2.nano
             KeyName:
                 Ref: 'SshKeyName'
-            Monitoring: False
-            SecurityGroupIds:
+            SecurityGroups:
                 - !Ref 'BastionSecurityGroup'
-            SourceDestCheck: true
-            SubnetId:
-                Ref: 'PublicSubnetZoneA'
-            Tenancy: default
-            Tags:
-                - Key: 'Name'
-                  Value:
-                      'Fn::Join': [ ':', [ 'Bastion', 'Zone A', !Ref 'AWS::StackName' ] ]
-                - Key: 'Project'
-                  Value:
-                      Ref: 'Project'
-                - Key: 'Purpose'
-                  Value: 'Jump server'
-                - Key: 'Creator'
-                  Value:
-                      Ref: 'Creator'
-                - Key: 'Environment'
-                  Value:
-                      Ref: 'Environment'
-                - Key: 'Freetext'
-                  Value: 'Usee SSH forwarding to simplify access to internal servers'
             UserData:
                 Fn::Base64: !Sub |
                     #!/bin/bash -xe
@@ -668,54 +646,43 @@ Resources:
                     echo "ROOT_DISK_ID=$ROOT_DISK_ID"
                     aws ec2 create-tags  --region ${AWS::Region} --resources $ROOT_DISK_ID --tags Key=Project,Value='${Project}'
 
-    # create a tiny jump server that allows SSH access to the private insances
-    BastionZoneB:
-        Type: AWS::EC2::Instance
+    # auto scaling group for the Bastion servers
+    BastionAutoScalingGroup:
+        DependsOn: 'InternetGateway'
+        Type: AWS::AutoScaling::AutoScalingGroup
         Properties:
-            EbsOptimized: false
-            IamInstanceProfile:
-                Ref: 'EC2FullAccessInstanceProfile'
-            ImageId:
-                Fn::FindInMap:
-                    - RegionToAmazonAMI
-                    - Ref: 'AWS::Region'
-                    - HVM64
-            InstanceInitiatedShutdownBehavior:  stop
-            InstanceType: t2.nano
-            KeyName:
-                Ref: 'SshKeyName'
-            Monitoring: False
-            SecurityGroupIds:
-                - !Ref 'BastionSecurityGroup'
-            SourceDestCheck: true
-            SubnetId:
-                Ref: 'PublicSubnetZoneB'
-            Tenancy: default
+            Cooldown: '120'
+            DesiredCapacity: '1'
+            HealthCheckType: 'EC2'
+            LaunchConfigurationName:
+                Ref: 'BastionLaunchConfiguration'
+            MaxSize: '2'
+            MinSize: '1'
             Tags:
                 - Key: 'Name'
                   Value:
-                      'Fn::Join': [ ':', [ 'Bastion', 'Zone B', !Ref 'AWS::StackName' ] ]
+                      'Fn::Join': [ ':', [ 'Bastion', !Ref 'AWS::StackName' ] ]
+                  PropagateAtLaunch: true
                 - Key: 'Project'
                   Value:
                       Ref: 'Project'
+                  PropagateAtLaunch: true
                 - Key: 'Purpose'
                   Value: 'Jump server'
+                  PropagateAtLaunch: true
                 - Key: 'Creator'
                   Value:
                       Ref: 'Creator'
+                  PropagateAtLaunch: true
                 - Key: 'Environment'
                   Value:
                       Ref: 'Environment'
+                  PropagateAtLaunch: true
                 - Key: 'Freetext'
-                  Value: 'Usee SSH forwarding to simplify access to internal servers'
-            UserData:
-                Fn::Base64: !Sub |
-                    #!/bin/bash -xe
-                    AWS_INSTANCE_ID=$( curl http://169.254.169.254/latest/meta-data/instance-id )
-                    echo "AWS_INSTANCE_ID=$AWS_INSTANCE_ID"
-                    ROOT_DISK_ID=$( aws ec2 describe-volumes  --region ${AWS::Region} --filter "Name=attachment.instance-id, Values=$AWS_INSTANCE_ID" --query "Volumes[].VolumeId" --out text )
-                    echo "ROOT_DISK_ID=$ROOT_DISK_ID"
-                    aws ec2 create-tags  --region ${AWS::Region} --resources $ROOT_DISK_ID --tags Key=Project,Value='${Project}'
+                  Value: 'Use SSH forwarding to simplify access to internal servers'
+                  PropagateAtLaunch: true
+            VPCZoneIdentifier: [ !Ref 'PublicSubnetZoneA', !Ref 'PublicSubnetZoneB' ]
+
 
 Outputs:
     VPC:
@@ -738,12 +705,6 @@ Outputs:
         Description: 'Zone B Private Subnet ID'
         Value:
             Ref: 'PrivateSubnetZoneB'
-    BastionPublicAddressA:
-        Description: 'Public IP address of the zone A Bastion server'
-        Value: !GetAtt BastionZoneA.PublicIp
-    BastionPublicAddressB:
-        Description: 'Public IP address of the zone B Bastion server'
-        Value: !GetAtt BastionZoneB.PublicIp
     SecurityGroupWideOpen:
         Description: 'Group ID of the WideOpen security group'
         Value: !GetAtt WideOpenSecurityGroup.GroupId
