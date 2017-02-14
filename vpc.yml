@@ -39,7 +39,7 @@ Parameters:
 
     SshKeyName:
         Description: 'Name of the key to use when creating the EC2 instances'
-        Type: 'String'
+        Type: 'AWS::EC2::KeyPair::KeyName'
         Default: 'asgard-lite-test'
 
 Mappings:
