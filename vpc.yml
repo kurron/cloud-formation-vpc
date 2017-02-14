@@ -689,6 +689,15 @@ Outputs:
         Description: 'Virtual Private Cloud'
         Value:
             Ref: 'VPC'
+    PublicSubnets:
+        Description: A list of the public subnets
+        Value: !Join [ ",", [ !Ref PublicSubnetZoneA, !Ref PublicSubnetZoneB ]]
+    PrivateSubnets:
+        Description: A list of the private subnets
+        Value: !Join [ ",", [ !Ref PrivateSubnetZoneA, !Ref PrivateSubnetZoneB ]]
+    Subnets:
+        Description: A list of the public subnets
+        Value: !Join [ ",", [ !Ref PublicSubnetZoneA, !Ref PublicSubnetZoneB, !Ref PrivateSubnetZoneA, !Ref PrivateSubnetZoneB ]]
     PublicSubnetZoneA:
         Description: 'Zone A Public Subnet ID'
         Value:
