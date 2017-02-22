@@ -36,7 +36,7 @@ There is nothing to install.
 
 # Tips and Tricks
 
-## Creating a VPC
+## Creating The Stack
 There is a convenience Bash script that can be run to create a new VPC.  If
 you just want to test things out run `scripts/create-stack.sh`.  In several
 moments, your VPC should be created.  Check your AWS console for confirmation.
@@ -50,7 +50,7 @@ This form provides the following:
 * creator of `you@somewhere.com`
 
 
-## Destroying a VPC
+## Destroying The Stack
 There is a convenience script for destroying VPCs.  run
 `scripts/destroy-stack.sh production-vpc` to destroy the VPC we created above.
 
