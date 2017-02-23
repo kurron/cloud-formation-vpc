@@ -4,7 +4,7 @@
 
 STACKNAME=${1:-Weapon-X}
 PROJECTNAME=${2:-Weapon-X}
-NETWORK=${3:-10.0.0.0}
+NETWORK=${3:-172.16.0.0}
 ENVIRONMENT=${4:-development}
 CREATOR=${5:-CloudFormation}
 TEMPLATELOCATION=${6:-file://$(pwd)/vpc.yml}

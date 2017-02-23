@@ -58,16 +58,22 @@ Mappings:
             PrivateSubnetZoneA: "10.0.20.0/24"
             PublicSubnetZoneB: "10.0.30.0/24"
             PrivateSubnetZoneB: "10.0.40.0/24"
+            PublicSubnetZoneC: "10.0.50.0/24"
+            PrivateSubnetZoneC: "10.0.60.0/24"
         "172.16.0.0":
             PublicSubnetZoneA: "172.16.10.0/24"
             PrivateSubnetZoneA: "172.16.20.0/24"
             PublicSubnetZoneB: "172.16.30.0/24"
             PrivateSubnetZoneB: "172.16.40.0/24"
+            PublicSubnetZoneC: "172.16.50.0/24"
+            PrivateSubnetZoneC: "172.16.60.0/24"
         "192.168.0.0":
             PublicSubnetZoneA: "192.168.10.0/24"
             PrivateSubnetZoneA: "192.168.20.0/24"
             PublicSubnetZoneB: "192.168.30.0/24"
             PrivateSubnetZoneB: "192.168.40.0/24"
+            PublicSubnetZoneC: "192.168.50.0/24"
+            PrivateSubnetZoneC: "192.168.60.0/24"
 
 Resources:
     # Create the VPC
@@ -242,6 +248,78 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # create an internet accessable subnet in the third availability zone
+    PublicSubnetZoneC:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            AvailabilityZone:
+                Fn::Select:
+                - '2'
+                - Fn::GetAZs:
+                    Ref: 'AWS::Region'
+            CidrBlock:
+                Fn::FindInMap:
+                - NetworkToSubnet
+                - Ref: 'Network'
+                - PublicSubnetZoneC
+            MapPublicIpOnLaunch: 'True'
+            VpcId:
+                Ref: 'VPC'
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ':', [ 'Public', 'Zone C', !Ref 'AWS::StackName' ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'Public for', !Ref 'Project' ] ]
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+
+    # create a non-internet accessable subnet in the third availability zone
+    PrivateSubnetZoneC:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            AvailabilityZone:
+                Fn::Select:
+                - '2'
+                - Fn::GetAZs:
+                    Ref: 'AWS::Region'
+            CidrBlock:
+                Fn::FindInMap:
+                - NetworkToSubnet
+                - Ref: 'Network'
+                - PrivateSubnetZoneC
+            MapPublicIpOnLaunch: 'False'
+            VpcId:
+                Ref: 'VPC'
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ':', [ 'Private', 'Zone C', !Ref 'AWS::StackName' ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value:
+                      'Fn::Join': [ ' ', [ 'Private for', !Ref 'Project' ] ]
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+
     # create a gateway to the internet
     InternetGateway:
         Type: 'AWS::EC2::InternetGateway'
@@ -321,6 +399,30 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # create the routing table for the public subnet in availability zone C
+    RouteTablePublicZoneC:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId:
+                Ref: 'VPC'
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ':', [ 'Public', 'Zone C', !Ref 'AWS::StackName' ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'Public subnet routing'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+
     # route traffic through the internet gateway
     RoutePublicZoneA:
         DependsOn:
@@ -345,6 +447,18 @@ Resources:
             RouteTableId:
                 Ref: 'RouteTablePublicZoneB'
 
+    # route traffic through the internet gateway
+    RoutePublicZoneC:
+        DependsOn:
+            - InternetGateway
+        Type: AWS::EC2::Route
+        Properties:
+            DestinationCidrBlock: 0.0.0.0/0
+            GatewayId:
+                Ref: 'InternetGateway'
+            RouteTableId:
+                Ref: 'RouteTablePublicZoneC'
+
     # associate public subnet to its routing table
     RouteAssociationPublicSubnetZoneA:
         Type: AWS::EC2::SubnetRouteTableAssociation
@@ -363,6 +477,15 @@ Resources:
             RouteTableId:
                 Ref: 'RouteTablePublicZoneB'
 
+    # associate public subnet to its routing table
+    RouteAssociationPublicSubnetZoneB:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId:
+                Ref: 'PublicSubnetZoneC'
+            RouteTableId:
+                Ref: 'RouteTablePublicZoneC'
+
     # we need an EIP for the zone A NAT gateway
     ElasticIpZoneA:
         DependsOn:
@@ -373,6 +496,14 @@ Resources:
 
     # we need an EIP for the zone B NAT gateway
     ElasticIpZoneB:
+        DependsOn:
+            - GatewayAttachment
+        Type: AWS::EC2::EIP
+        Properties:
+            Domain: vpc
+
+    # we need an EIP for the zone C NAT gateway
+    ElasticIpZoneC:
         DependsOn:
             - GatewayAttachment
         Type: AWS::EC2::EIP
@@ -404,6 +535,19 @@ Resources:
                     - AllocationId
             SubnetId:
                 Ref: 'PublicSubnetZoneB'
+
+    # place the zone C NAT gateway into the public subnet (it needs internet access)
+    NatGatewayZoneC:
+        Type: AWS::EC2::NatGateway
+        DependsOn:
+            - InternetGateway
+        Properties:
+            AllocationId:
+                Fn::GetAtt:
+                    - ElasticIpZoneC
+                    - AllocationId
+            SubnetId:
+                Ref: 'PublicSubnetZoneC'
 
     # create a routing table for the private subnet in availability zone A
     RouteTablePrivateZoneA:
@@ -453,6 +597,30 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'No notes'
 
+    # create a routing table for the private subnet in availability zone C
+    RouteTablePrivateZoneC:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId:
+                Ref: 'VPC'
+            Tags:
+                - Key: 'Name'
+                  Value:
+                      'Fn::Join': [ ':', [ 'Private', 'Zone C', !Ref 'AWS::StackName' ] ]
+                - Key: 'Project'
+                  Value:
+                      Ref: 'Project'
+                - Key: 'Purpose'
+                  Value: 'Private subnet routing'
+                - Key: 'Creator'
+                  Value:
+                      Ref: 'Creator'
+                - Key: 'Environment'
+                  Value:
+                      Ref: 'Environment'
+                - Key: 'Freetext'
+                  Value: 'No notes'
+
     # associate the private subnet with its routing table
     RouteAssociationPrivateSubnetZoneA:
         Type: AWS::EC2::SubnetRouteTableAssociation
@@ -470,6 +638,15 @@ Resources:
                 Ref: 'PrivateSubnetZoneB'
             RouteTableId:
                 Ref: 'RouteTablePrivateZoneB'
+
+    # associate the private subnet with its routing table
+    RouteAssociationPrivateSubnetZoneC:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId:
+                Ref: 'PrivateSubnetZoneC'
+            RouteTableId:
+                Ref: 'RouteTablePrivateZoneC'
 
     # route outbound traffic to the zone A NAT gateway
     NatRouteZoneA:
@@ -490,6 +667,16 @@ Resources:
                 Ref: 'NatGatewayZoneB'
             RouteTableId:
                 Ref: 'RouteTablePrivateZoneB'
+
+    # route outbound traffic to the zone C NAT gateway
+    NatRouteZoneC:
+        Type: AWS::EC2::Route
+        Properties:
+            DestinationCidrBlock: 0.0.0.0/0
+            NatGatewayId:
+                Ref: 'NatGatewayZoneC'
+            RouteTableId:
+                Ref: 'RouteTablePrivateZoneC'
 
     # locked down the bastion servers so only inbound SSH is allowed
     BastionSecurityGroup:
@@ -681,7 +868,7 @@ Resources:
                 - Key: 'Freetext'
                   Value: 'Use SSH forwarding to simplify access to internal servers'
                   PropagateAtLaunch: true
-            VPCZoneIdentifier: [ !Ref 'PublicSubnetZoneA', !Ref 'PublicSubnetZoneB' ]
+            VPCZoneIdentifier: [ !Ref 'PublicSubnetZoneA', !Ref 'PublicSubnetZoneB', !Ref 'PublicSubnetZoneC' ]
 
 
 Outputs:
@@ -691,13 +878,13 @@ Outputs:
             Ref: 'VPC'
     PublicSubnets:
         Description: A list of the public subnets
-        Value: !Join [ ",", [ !Ref PublicSubnetZoneA, !Ref PublicSubnetZoneB ]]
+        Value: !Join [ ",", [ !Ref PublicSubnetZoneA, !Ref PublicSubnetZoneB, !Ref PublicSubnetZoneC ]]
     PrivateSubnets:
         Description: A list of the private subnets
-        Value: !Join [ ",", [ !Ref PrivateSubnetZoneA, !Ref PrivateSubnetZoneB ]]
+        Value: !Join [ ",", [ !Ref PrivateSubnetZoneA, !Ref PrivateSubnetZoneB, !Ref PrivateSubnetZoneC ]]
     Subnets:
         Description: A list of the public subnets
-        Value: !Join [ ",", [ !Ref PublicSubnetZoneA, !Ref PublicSubnetZoneB, !Ref PrivateSubnetZoneA, !Ref PrivateSubnetZoneB ]]
+        Value: !Join [ ",", [ !Ref PublicSubnetZoneA, !Ref PublicSubnetZoneB, !Ref PublicSubnetZoneC, !Ref PrivateSubnetZoneA, !Ref PrivateSubnetZoneB, !Ref PrivateSubnetZoneC ]]
     PublicSubnetZoneA:
         Description: 'Zone A Public Subnet ID'
         Value:
@@ -714,6 +901,14 @@ Outputs:
         Description: 'Zone B Private Subnet ID'
         Value:
             Ref: 'PrivateSubnetZoneB'
+    PublicSubnetZoneC:
+        Description: 'Zone C Public Subnet ID'
+        Value:
+            Ref: 'PublicSubnetZoneC'
+    PrivateSubnetZoneC:
+        Description: 'Zone C Private Subnet ID'
+        Value:
+            Ref: 'PrivateSubnetZoneC'
     SecurityGroupWideOpen:
         Description: 'Group ID of the WideOpen security group'
         Value: !GetAtt WideOpenSecurityGroup.GroupId
