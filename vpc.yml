@@ -870,6 +870,29 @@ Resources:
                   PropagateAtLaunch: true
             VPCZoneIdentifier: [ !Ref 'PublicSubnetZoneA', !Ref 'PublicSubnetZoneB', !Ref 'PublicSubnetZoneC' ]
 
+    # Turn off the instances after work hours
+    ScheduledActionDown:
+        Type: AWS::AutoScaling::ScheduledAction
+        Properties:
+            AutoScalingGroupName:
+                Ref: BastionAutoScalingGroup
+            DesiredCapacity: 0
+            MaxSize: 0
+            MinSize: 0
+            # 6:59 PM EST converted to UTC (before the full hour to avoid getting charged for a minute of usage)
+            Recurrence: '59 00 * * *'
+
+    # Turn on the instances during work hours
+    ScheduledActionUp:
+        Type: AWS::AutoScaling::ScheduledAction
+        Properties:
+            AutoScalingGroupName:
+                Ref: BastionAutoScalingGroup
+            DesiredCapacity: 1
+            MaxSize: 2
+            MinSize: 1
+            # 7:00 AM EST converted to UTC
+            Recurrence: '00 12 * * *'
 
 Outputs:
     VPC:
