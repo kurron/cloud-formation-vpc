@@ -14,6 +14,7 @@ echo $VALIDATE
 $VALIDATE
 
 CREATE="aws cloudformation create-stack --stack-name $STACKNAME \
+                                        --disable-rollback \
                                         --template-body $TEMPLATELOCATION \
                                         --capabilities CAPABILITY_NAMED_IAM \
                                         --parameters ParameterKey=Project,ParameterValue=$PROJECTNAME \
