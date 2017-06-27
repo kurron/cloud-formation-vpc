@@ -51,7 +51,7 @@ Mappings:
         us-west-1:
             HVM64: ami-165a0876
         us-west-2:
-            HVM64: ami-f173cc91
+            HVM64: ami-6df1e514
     NetworkToSubnet:
         "10.0.0.0":
             PublicSubnetZoneA: "10.0.10.0/24"
